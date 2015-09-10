@@ -1,0 +1,14 @@
+﻿Build started 9/10/2015 11:37:23 AM.
+     1>Project "C:\Users\jacobgood1\Documents\GitHub\csfml-wrapper\csfml-wrapper\csfml-wrapper.vcxproj" on node 2 (Build target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(364,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+     1>Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\jacobgood1\Documents\GitHub\red-sfml-bindings\libs\csfml-wrapper.dll" /INCREMENTAL /NOLOGO "csfml-audio-2.lib" "csfml-graphics-2.lib" "csfml-window-2.lib" "csfml-system-2.lib" "csfml-network-2.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\jacobgood1\Documents\GitHub\red-sfml-bindings\libs\csfml-wrapper.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\jacobgood1\Documents\GitHub\red-sfml-bindings\libs\csfml-wrapper.lib" /MACHINE:X86 /DLL "Debug\csfml-wrapper.obj"
+         Debug\dllmain.obj
+         Debug\stdafx.obj
+            Creating library C:\Users\jacobgood1\Documents\GitHub\red-sfml-bindings\libs\csfml-wrapper.lib and object C:\Users\jacobgood1\Documents\GitHub\red-sfml-bindings\libs\csfml-wrapper.exp
+         csfml-wrapper.vcxproj -> C:\Users\jacobgood1\Documents\GitHub\red-sfml-bindings\libs\csfml-wrapper.dll
+     1>Done Building Project "C:\Users\jacobgood1\Documents\GitHub\csfml-wrapper\csfml-wrapper\csfml-wrapper.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.35
