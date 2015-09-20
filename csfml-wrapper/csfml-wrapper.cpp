@@ -5,20 +5,12 @@
 #include <SFML/Graphics.h>
 #include <iostream>
 
-extern "C" __declspec(dllexport) inline sfEvent __cdecl sf_event_create(void)
-{
-	sfEvent event;
-	return event;
-}
 
-extern "C" __declspec(dllexport) inline sfEventType __cdecl sf_event_get_type(sfEvent &event)
-{
-	return event.type;
-}
+//TOMM TRY BINDING STRAIGHT TO C!!!
 
-extern "C" __declspec(dllexport) inline bool __cdecl sf_render_window_poll_event(sfRenderWindow* window, sfEvent *event)
+extern "C" __declspec(dllexport) inline bool __cdecl sf_render_window_poll_event(sfRenderWindow* window, sfEvent event)
 {
-	return sfRenderWindow_pollEvent(window, event);
+	return sfRenderWindow_pollEvent(window, &event);
 }
 
 extern "C" __declspec(dllexport) inline sfRenderWindow* __cdecl sf_render_window_create(int height, int width, char* title)
@@ -37,6 +29,19 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_set_title(
 
 
 // start window operations
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_clear(sfRenderWindow* window)  //TODO add color parameter later on maybe
+{
+	sfRenderWindow_clear(window, sfBlack);
+}
+extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_draw_sprite(sfRenderWindow* window, const sfSprite* sprite)
+{
+	sfRenderWindow_drawSprite(window, sprite, nullptr);
+}
+extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_display(sfRenderWindow* window)
+{
+	sfRenderWindow_display(window);
+}
 
 extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_close(sfRenderWindow* window)
 {
@@ -69,18 +74,18 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_clock_destroy(sfClock* c
 }
 
 
-extern "C" __declspec(dllexport) inline void __cdecl sf_clock_restart(sfClock* clock)
+extern "C" __declspec(dllexport) inline sfTime __cdecl sf_clock_restart(sfClock* clock)
 {
-	 sfClock_restart(clock);
+	 return sfClock_restart(clock);
 }
 
 
 
 // start time operations
 
-extern "C" __declspec(dllexport) inline sfTime* __cdecl sf_time_zero(void)
+extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_zero(void)
 {
-	return &sfTime_Zero;
+	return sfTime_Zero;
 }
 
 extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_per_frame(void)
@@ -88,22 +93,22 @@ extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_per_frame(void)
 	return sfSeconds(1.f / 60.f);
 }
 
-extern "C" __declspec(dllexport) inline sfInt32 __cdecl sf_time_milliseconds(sfTime time)
-{
-	return sfTime_asMilliseconds(time);
-}
-
-extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_subtract(sfTime thisTime, sfTime otherTime)
+extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_set_subtract(sfTime thisTime, sfTime otherTime)
 {
 	thisTime.microseconds -= otherTime.microseconds;
 	return thisTime;
 }
 
-extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_add(sfTime thisTime, sfTime otherTime)
+//TODO MAKE TIME HANDLING INTERNAL!!!!!!!!!!!!!!
+//TODO create function pointers so that you can point straight into the c++ code without needing to write these lame loops in reds!
+
+extern "C" __declspec(dllexport) inline sfTime __cdecl sf_time_set_add(sfTime thisTime, sfClock* clock)
 {
+	sfTime reset = sfClock_restart(clock);
+	std::cout << reset.microseconds << std::endl; 
+	//time.microseconds = thisTime.microseconds + otherTime.microseconds;
 	
-	thisTime.microseconds += otherTime.microseconds;
-	return thisTime;
+	return reset;
 }
 
 extern "C" __declspec(dllexport) inline bool __cdecl sf_time_greater_than(sfTime thisTime, sfTime otherTime)
@@ -111,10 +116,116 @@ extern "C" __declspec(dllexport) inline bool __cdecl sf_time_greater_than(sfTime
 	return thisTime.microseconds > otherTime.microseconds;
 }
 
+extern "C" __declspec(dllexport) inline void __cdecl sf_time_print(sfTime time)
+{
+	std::cout << time.microseconds << std::endl;
+}
 
 
 // end time operations
 
 
+//utiliy functions
+
+extern "C" __declspec(dllexport) inline void __cdecl print_integer(int integer)
+{
+	std::cout << integer << std::endl;
+}
+
+extern "C" __declspec(dllexport) inline float __cdecl sf_time_get_time(sfTime time)
+{
+	return time.microseconds;
+}
+
+extern "C" __declspec(dllexport) inline void __cdecl start(
+	int width, 
+	int height, 
+	char* title, 
+	void(*init)(),
+	void(*process_events)(sfRenderWindow*, sfEvent*), 
+	void (*update)(sfInt64), 
+	void(*render)(sfRenderWindow*),
+	void(*shut_down)())
+{
+	sfVideoMode mode = { height, width, 32 };
+	auto *window = sfRenderWindow_create(mode, title, sfResize | sfClose, nullptr);
+	sfEvent event;
+	sfClock *clock = sfClock_create();
+	auto timeSinceLastUpdate = sfTime_Zero;
+	const auto TimePerFrame = sfSeconds(1.f / 60.f);
+	init();
+	while (sfRenderWindow_isOpen(window))
+	{
+		while (sfRenderWindow_pollEvent(window, &event))
+		{
+			process_events(window, &event);
+		}
+		
+		timeSinceLastUpdate.microseconds += sfClock_restart(clock).microseconds;
+		while (timeSinceLastUpdate.microseconds > TimePerFrame.microseconds)
+		{
+			timeSinceLastUpdate.microseconds -= TimePerFrame.microseconds;
+			while (sfRenderWindow_pollEvent(window, &event))
+			{
+				process_events(window, &event);
+			}
+			update(TimePerFrame.microseconds);
+		}
+		render(window);
+	}
+	shut_down();
+	sfRenderWindow_destroy(window);
+}
+
+// start sprite procedures
+extern "C" __declspec(dllexport) inline sfSprite* __cdecl sf_sprite_create(void)
+{
+	return sfSprite_create();
+}
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_texture(
+	sfSprite* sprite, 
+	const sfTexture* texture)
+{
+	return sfSprite_setTexture(sprite,texture, sfTrue);
+}
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_position(sfSprite* sprite, sfVector2f v)
+{
+	sfVector2f crap = { 100.f, 100.f};
+	sfSprite_setPosition(sprite, crap);
+}
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_destroy(sfSprite* sprite)
+{
+	sfSprite_destroy(sprite);
+}
+
+// end sprite procedures
+
+// start texture procedures
+
+extern "C" __declspec(dllexport) inline sfTexture* __cdecl sf_texture_create(char* file_location)
+{
+	return sfTexture_createFromFile(file_location, nullptr);
+}
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_texture_destroy(sfTexture* texture)
+{
+	sfTexture_destroy(texture);
+}
+
+// end texture procedures
 
 
+
+// start vector procedures
+
+extern "C" __declspec(dllexport) inline sfVector2f __cdecl sf_vector_create(int x, int y)
+{
+
+	sfVector2f vec = { static_cast<float>(x), static_cast<float>(y) };
+	return vec;
+}
+
+// end vector procedures
