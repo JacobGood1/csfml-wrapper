@@ -190,10 +190,10 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_texture(
 	return sfSprite_setTexture(sprite,texture, sfTrue);
 }
 
-extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_position(sfSprite* sprite, sfVector2f v)
+extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_position(sfSprite* sprite, float x, float y)
 {
-	sfVector2f crap = { 100.f, 100.f};
-	sfSprite_setPosition(sprite, crap);
+	sfVector2f temp = { x,y };
+	sfSprite_setPosition(sprite, temp);
 }
 
 extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_destroy(sfSprite* sprite)
@@ -221,11 +221,26 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_texture_destroy(sfTextur
 
 // start vector procedures
 
-extern "C" __declspec(dllexport) inline sfVector2f __cdecl sf_vector_create(int x, int y)
-{
 
-	sfVector2f vec = { static_cast<float>(x), static_cast<float>(y) };
+
+// end vector procedures
+
+
+//keep for reference... red passes by references only so hacks like this are needed
+/*
+extern "C" __declspec(dllexport) inline sfVector2f* __cdecl sf_vector_create(float x, float y)
+{
+	sfVector2f* vec;
+	vec = static_cast<sfVector2f*>(malloc(sizeof(sfVector2f)));
+	vec->x = x;
+	vec->y = y;
 	return vec;
 }
 
-// end vector procedures
+
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_vector_destroy(sfVector2f* vec)
+{
+	free(vec);
+}
+*/
