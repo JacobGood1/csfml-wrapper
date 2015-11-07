@@ -4,9 +4,15 @@
 #include "stdafx.h"
 #include <SFML/Graphics.h>
 #include <iostream>
+#include <vector>
+
+using namespace std;
 
 
-//TOMM TRY BINDING STRAIGHT TO C!!!
+extern "C" __declspec(dllexport) inline sfVector2f* __cdecl sf_vector_create(float x, float y);
+extern "C" __declspec(dllexport) inline void __cdecl sf_vector_destroy(sfVector2f* vec);
+
+
 
 extern "C" __declspec(dllexport) inline bool __cdecl sf_render_window_poll_event(sfRenderWindow* window, sfEvent event)
 {
@@ -34,7 +40,7 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_clear(sfRe
 {
 	sfRenderWindow_clear(window, sfBlack);
 }
-extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_draw_sprite(sfRenderWindow* window, const sfSprite* sprite)
+extern "C" __declspec(dllexport) inline void __cdecl sf_render_window_draw_sprite(sfRenderWindow* window, sfSprite* sprite)
 {
 	sfRenderWindow_drawSprite(window, sprite, nullptr);
 }
@@ -137,15 +143,30 @@ extern "C" __declspec(dllexport) inline float __cdecl sf_time_get_time(sfTime ti
 	return time.microseconds;
 }
 
+void(*init)();
+void(*process_events)(sfRenderWindow*, sfEvent*);
+void(*update)(sfInt64);
+void(*render)(sfRenderWindow*);
+void(*shut_down)();
+
+extern "C" __declspec(dllexport) inline void __cdecl set_callbacks(
+	void(*init_setter)(),
+	void(*process_events_setter)(sfRenderWindow*, sfEvent*),
+	void(*update_setter)(sfInt64),
+	void(*render_setter)(sfRenderWindow*),
+	void(*shut_down_setter)())
+{
+	init = *init_setter;
+	process_events = *process_events_setter;
+	update = *update_setter;
+	render = *render_setter;
+	shut_down = *shut_down_setter;
+}
+
 extern "C" __declspec(dllexport) inline void __cdecl start(
 	int width, 
 	int height, 
-	char* title, 
-	void(*init)(),
-	void(*process_events)(sfRenderWindow*, sfEvent*), 
-	void (*update)(sfInt64), 
-	void(*render)(sfRenderWindow*),
-	void(*shut_down)())
+	char* title)
 {
 	sfVideoMode mode = { height, width, 32 };
 	auto *window = sfRenderWindow_create(mode, title, sfResize | sfClose, nullptr);
@@ -177,17 +198,49 @@ extern "C" __declspec(dllexport) inline void __cdecl start(
 	sfRenderWindow_destroy(window);
 }
 
+//start sfFloatRect procedures
+extern "C" __declspec(dllexport) inline float __cdecl sf_float_rect_height(sfFloatRect* rect)
+{
+	return rect->height;
+}
+extern "C" __declspec(dllexport) inline float __cdecl sf_float_rect_width(sfFloatRect* rect)
+{
+	return rect->width;
+}
+extern "C" __declspec(dllexport) inline float __cdecl sf_float_rect_top(sfFloatRect* rect)
+{
+	return rect->top;
+}
+extern "C" __declspec(dllexport) inline float __cdecl sf_float_rect_left(sfFloatRect* rect)
+{
+	return rect->left;
+}
+//end sfFloatRect procedures
+
 // start sprite procedures
 extern "C" __declspec(dllexport) inline sfSprite* __cdecl sf_sprite_create(void)
 {
 	return sfSprite_create();
 }
 
+extern "C" __declspec(dllexport) inline sfFloatRect __cdecl sf_sprite_get_local_bounds(sfSprite* sprite)
+{
+	return sfSprite_getLocalBounds(sprite);
+}
+
+extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_origin_to_center(sfSprite* sprite)
+{
+	sfFloatRect bounds = sfSprite_getLocalBounds(sprite);
+	sfVector2f temp = { bounds.width / 2.f, bounds.height / 2.f };
+	sfSprite_setOrigin(sprite, temp);
+}
+
+
 extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_texture(
 	sfSprite* sprite, 
 	const sfTexture* texture)
 {
-	return sfSprite_setTexture(sprite,texture, sfTrue);
+	return sfSprite_setTexture(sprite, texture, sfTrue);
 }
 
 extern "C" __declspec(dllexport) inline void __cdecl sf_sprite_set_position(sfSprite* sprite, float x, float y)
@@ -210,6 +263,7 @@ extern "C" __declspec(dllexport) inline sfTexture* __cdecl sf_texture_create(cha
 	return sfTexture_createFromFile(file_location, nullptr);
 }
 
+
 extern "C" __declspec(dllexport) inline void __cdecl sf_texture_destroy(sfTexture* texture)
 {
 	sfTexture_destroy(texture);
@@ -217,7 +271,19 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_texture_destroy(sfTextur
 
 // end texture procedures
 
+// start Event procedures
 
+extern "C" __declspec(dllexport) inline int __cdecl sf_event_get_key_code(sfEvent* event)
+{
+	return event->key.code;
+}
+extern "C" __declspec(dllexport) inline int __cdecl sf_event_get_type(sfEvent* event)
+{
+	return event->type;
+}
+
+
+// end Event procedures
 
 // start vector procedures
 
@@ -227,7 +293,7 @@ extern "C" __declspec(dllexport) inline void __cdecl sf_texture_destroy(sfTextur
 
 
 //keep for reference... red passes by references only so hacks like this are needed
-/*
+
 extern "C" __declspec(dllexport) inline sfVector2f* __cdecl sf_vector_create(float x, float y)
 {
 	sfVector2f* vec;
@@ -236,11 +302,7 @@ extern "C" __declspec(dllexport) inline sfVector2f* __cdecl sf_vector_create(flo
 	vec->y = y;
 	return vec;
 }
-
-
-
 extern "C" __declspec(dllexport) inline void __cdecl sf_vector_destroy(sfVector2f* vec)
 {
 	free(vec);
 }
-*/
